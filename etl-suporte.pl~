@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use DBI;
+
+my $dbi = DBI->connect('dbi:Pg:dbname=rtdb;host=172.30.116.2', 'ruoso', 'devel');
+
+
+my %filas;
+my $sth_queues = $dbi->prepare('SELECT id, name FROM queues');
+$sth_queues->execute();
+while (my ($id, $nome) = $sth_queues->fetchrow_hashref) {
+    $filas{$nome} = $id;
+}
+
+
