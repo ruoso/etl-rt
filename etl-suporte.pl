@@ -73,13 +73,33 @@ sub fila_interessa {
 my $sth_historico_completo = $dbi->prepare
   ('SELECT * FROM transactions WHERE '.
    'objecttype=? AND objectid=? '.
-   'order by created');
+   'order by created DESC');
 sub processar_ticket_suporte {
     my $ticket = shift;
     my @historico;
     while (my $t = $sth_historico_completo->fetchrow_hashref) {
         push @historico, $t;
     }
+
+    # vamos pegar as alterações que são feitas todas de uma vez e
+    # consolidar (usando o campo created);
+    my @historico_consolidado;
+    my %alteracoes;
+    my $last_created = 0;
+    foreach my $t (@historico) {
+        if ($last_created ne $t->{created}) {
+            push @historico_consolidado,
+              { created => $last_created;
+                alteracoes => \%alteracoes };
+            %alteracoes = ();
+            $last_created = $t->{created};
+        }
+        $alteracoes{lc($t->{field})} = $t->{oldvalue};
+    }
+
+    # Agora vamos fazer uma lista consolidada das versões dos tickets
+    # incluindo o periodo quando ele foi valido.
+    my @versoes = ( $ticket ); # o primeiro elemento é a versão recente
 
     
 
